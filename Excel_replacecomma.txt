@@ -1,0 +1,32 @@
+Sub SecondCommasAreNotWorthy()
+'Jim Cone - San Francisco, USA - Feb 11, 2005
+'Replaces every second comma in every cell in
+'the selection with a space.
+
+Dim lngN As Long
+Dim lngCount As Long
+Dim strValue As String
+Dim rngCell As Excel.Range
+
+' The cells to change must be selected.
+For Each rngCell In Selection
+strValue = rngCell.Value
+'Go thru each character in the cell
+For lngN = 1 To Len(strValue)
+'Identify commas
+If Asc(Mid$(strValue, lngN, 1)) = 44 Then
+lngCount = lngCount + 1
+'Is the count of commas divisible by 2.
+If lngCount Mod 2 = 0 Then
+'Replace comma with space
+Mid$(strValue, lngN, 1) = "."
+End If
+End If
+Next 'lngN
+'Replace text in the cell with new text.
+rngCell.Value = strValue
+lngCount = 0
+'Now do it again
+Next 'rngCell
+Set rngCell = Nothing
+End Sub
