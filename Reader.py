@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import config_dev as cfg
 # Function to read CSV data at the 'input' path
 # Returns data object (numpy array) with the following structure
 # (dependend on the structure in the CSV file
@@ -9,7 +10,7 @@ import csv
 # ...   ...     ...     ...     ...     ...     ...
 def readCSVData(csvPath):
     data = np.zeros((1,7))
-    with open(csvPath, "rt") as csvfile:
+    with open(cfg.LOADPATH + csvPath, "rt") as csvfile:
         dataReader = csv.reader(csvfile, delimiter=',')
         next(dataReader)
         for row in dataReader:
