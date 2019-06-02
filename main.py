@@ -68,6 +68,7 @@ plt.grid(True)
 
 
 # ----- First try to get the peaks of the Acc. norm and plot it
+# akueller Threshold gibt nut bei '2019-05-2711.00.19.csv' gute Ergebnisse !!
 indexes = peakutils.indexes(data[:, 7], thres=0.35 * max(data[:, 7]), min_dist=50)
 print('Anzahl peaks:', indexes.shape[0])
 plt.plot(data[indexes,0], data[indexes, 7], 'ro')
