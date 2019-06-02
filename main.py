@@ -5,12 +5,13 @@ import numpy as np
 import config_dev as cfg
 import math
 import peakutils
+from scipy import signal
 
 DATAFILE = '2019-05-2711.00.19.csv'
 
 # ----- Load the data to a numpy array and save the array
-#data = reader.readCSVData(DATAFILE)
-#np.save(cfg.SAVEPATH + 'dataLoaded.npy', data)
+data = reader.readCSVData(DATAFILE)
+np.save(cfg.SAVEPATH + 'dataLoaded.npy', data)
 data = np.load(cfg.SAVEPATH + 'dataLoaded.npy')
 
 # ----- Visualize the data
@@ -58,7 +59,6 @@ np.save(cfg.SAVEPATH + 'dataWithAccNorm.npy', data)
 data = np.load(cfg.SAVEPATH + 'dataWithAccNorm.npy')
 
 # Plot new Data
-
 plt.figure()
 plt.plot(data[:, 0], data[:, 7])
 plt.xlabel('time')
@@ -66,10 +66,29 @@ plt.ylabel('Acc. Norm')
 plt.grid(True)
 ##plt.show()
 
-# ----- First try to get the peaks of the Acc. norm
 
-
-indexes = peakutils.indexes(data[:, 7], thres=0.4 * max(data[:, 7]), min_dist=50)
+# ----- First try to get the peaks of the Acc. norm and plot it
+indexes = peakutils.indexes(data[:, 7], thres=0.35 * max(data[:, 7]), min_dist=50)
 print('Anzahl peaks:', indexes.shape[0])
 plt.plot(data[indexes,0], data[indexes, 7], 'ro')
 plt.show()
+
+
+if False:
+    # ---- First try of a low pass filter
+    fc = 3  # Cut-off frequency of the filter
+    fs = 400  # Sampling frequency
+    w = fc / (fs / 2) # Normalize the frequency
+    b, a = signal.butter(5, w, 'low')
+    output = signal.filtfilt(b, a, data[:,7])
+    plt.figure()
+    plt.plot(data[:,0], output, label='filtered')
+    plt.legend()
+    plt.grid(True)
+
+    # ---- visualize the results after filtering the signal
+    indexes2 = peakutils.indexes(output, thres=0.4 * max(output), min_dist=50)
+    print('Anzahl peaks (nach Filter):', indexes2.shape[0])
+    plt.plot(data[indexes2,0], output[indexes2], 'ro')
+    plt.show()
+
