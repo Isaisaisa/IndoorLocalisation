@@ -9,6 +9,7 @@ from scipy import signal
 
 DATAFILE = '2019-05-2711.00.19.csv'
 
+
 # ----- Load the data to a numpy array and save the array
 data = reader.readCSVData(DATAFILE)
 np.save(cfg.SAVEPATH + 'dataLoaded.npy', data)
@@ -93,3 +94,4 @@ if False:
     plt.plot(data[indexes2,0], output[indexes2], 'ro')
     plt.show()
 
+import AngularIntegration
