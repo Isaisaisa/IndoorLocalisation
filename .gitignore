@@ -1,0 +1,6 @@
+## IDE specific
+.idea
+__pycache__/
+
+## program specific
+config_dev.py
