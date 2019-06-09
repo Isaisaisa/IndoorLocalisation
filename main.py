@@ -9,8 +9,10 @@ from scipy import signal
 import Reader as reader
 import config_dev as cfg
 import AngularIntegration as AI
+import Plotter
 
-DATAFILE = 'record1.csv'
+DATAFILE = 'record2.csv'
+VISUALIZE_RECORDED_DATA = True
 LOWPASSFILTER = True
 filename = os.path.splitext(os.path.basename(DATAFILE))[0]
 
@@ -27,44 +29,8 @@ if not os.path.exists(filepath):
 data = np.load(filepath)
 
 # ----- Visualize the data
-# time,gFx.gFy,gFz.wx,wy.wz,
-fig, axs = plt.subplots(3, 2)
-# G-force data
-# Plot data from first and second column
-axs[0, 0].plot(data[:, 0], data[:, 1])
-axs[0, 0].set_xlabel('time')
-axs[0, 0].set_ylabel('gFx')
-axs[0, 0].grid(True)
-# Plot data from first and third column
-axs[1, 0].plot(data[:, 0], data[:, 2])
-axs[1, 0].set_xlabel('time')
-axs[1, 0].set_ylabel('gFy')
-axs[1, 0].grid(True)
-# Plot data from first and fours column
-axs[2, 0].plot(data[:, 0], data[:, 3])
-axs[2, 0].set_xlabel('time')
-axs[2, 0].set_ylabel('gFz')
-axs[2, 0].grid(True)
-
-# Gyroscope data
-# Plot data from first and fifth column
-axs[0, 1].plot(data[:, 0], data[:, 4])
-axs[0, 1].set_xlabel('time')
-axs[0, 1].set_ylabel('wx')
-axs[0, 1].grid(True)
-# Plot data from first and sixth column
-axs[1, 1].plot(data[:, 0], data[:, 5])
-axs[1, 1].set_xlabel('time')
-axs[1, 1].set_ylabel('wy')
-axs[1, 1].grid(True)
-# Plot data from first and seventh column
-axs[2, 1].plot(data[:, 0], data[:, 6])
-axs[2, 1].set_xlabel('time')
-axs[2, 1].set_ylabel('wz')
-axs[2, 1].grid(True)
-
-# fig.tight_layout()
-#plt.show()
+if VISUALIZE_RECORDED_DATA:
+    Plotter.plotRecordedData(data)
 
 # ----- Calculate the norm of the acceleration
 dataLength = data.shape
@@ -74,25 +40,22 @@ for x in range(0, dataLength[0]):
     dataAppend[x] = norm
 
 data = np.append(data, dataAppend, axis = 1)
+
 # Save new Data
 np.save(cfg.SAVEPATH + filename + '_dataWithAccNorm.npy', data)
 data = np.load(cfg.SAVEPATH + filename + '_dataWithAccNorm.npy')
 
 # Plot new Data
-plt.figure()
-plt.plot(data[:, 0], data[:, 7])
-plt.xlabel('time')
-plt.ylabel('Acc. Norm')
-plt.grid(True)
-##plt.show()
+Plotter.plotOneDataSet(dataX=data[:,0], dataY=data[:,7], xLabel='time',yLabel='Acc. Norm', title='calculated acceleration norm')
 
 
 # ----- First try to get the peaks of the Acc. norm and plot it
 # akueller Threshold gibt nut bei '2019-05-2711.00.19.csv' gute Ergebnisse !!
 indexes = peakutils.indexes(data[:, 7], thres=0.35 * max(data[:, 7]), min_dist=50)
 print('Anzahl peaks:', indexes.shape[0])
-plt.plot(data[indexes,0], data[indexes, 7], 'ro')
-plt.show()
+# visualize the peaks
+Plotter.plotOneDataSetWithPeaks(dataX=data[:,0], dataY=data[:,7], peakIndexes=indexes, xLabel='time', yLabel='Acc. Norm', title='Peaks with a simple threshold')
+
 
 
 if LOWPASSFILTER:
@@ -102,16 +65,11 @@ if LOWPASSFILTER:
     w = fc / (fs / 2) # Normalize the frequency
     b, a = signal.butter(5, w, 'low')
     output = signal.filtfilt(b, a, data[:,7])
-    plt.figure()
-    plt.plot(data[:,0], output, label='filtered')
-    plt.legend()
-    plt.grid(True)
 
     # ---- visualize the results after filtering the signal
     indexes2 = peakutils.indexes(output, thres=0.4 * max(output), min_dist=50)
     print('Anzahl peaks (nach Filter):', indexes2.shape[0])
-    plt.plot(data[indexes2,0], output[indexes2], 'ro')
-    #plt.show()
+    Plotter.plotOneDataSetWithPeaks(dataX=data[:,0], dataY=output, peakIndexes=indexes2, xLabel='time', yLabel='Acc. Norm (filtered)', title='signal and peaks (threshold) after low pass filter')
 
     # ---- extract peaks by using scipy.signal
     avg = np.mean(output)
@@ -119,13 +77,17 @@ if LOWPASSFILTER:
     print('Min height of peak: ', 1.1 * avg)
     [idx, prop] = signal.find_peaks(output, height=1.1*avg)
     print('Anzahl Peaks mit scipy + Filter: ', len(idx))
-    plt.figure()
-    plt.xlabel('time')
-    plt.ylabel('Acc.')
-    plt.plot(data[:, 0], output, label='filtered')
-    plt.plot(data[idx, 0], output[idx], 'ro')
-    plt.show()
+    Plotter.plotOneDataSetWithPeaks(dataX=data[:,0], dataY=output, peakIndexes=idx, xLabel='time', yLabel='Acc. Norm', title='signal and peaks (scipy) after low pass filter')
 
-turning_Angle = AI.calculateTurningAngle(dataWithAccNorm=data)
-AI.plotTrack(turning_Angle, indexes)
-print('a')
+
+# ----- Calculate Turning Angle
+turning_Angle = AI.calculateTurningAngle(dataWithAccNorm=data, mu = 0.5)
+# ---- Plot estimated track with different step estimation results
+estimatedTrack = AI.estimateTrack(turning_Angle, indexes ,stepLength=0.7)
+Plotter.plotEstimatedTrack(dataX= estimatedTrack[:, 0], dataY= estimatedTrack[:,1], title='Estimated track, peaks with threshold')
+estimatedTrack2 = AI.estimateTrack(turning_Angle, indexes2, stepLength=0.7)
+Plotter.plotEstimatedTrack(dataX= estimatedTrack2[:, 0], dataY= estimatedTrack2[:,1], title='Estimated track, peaks with threshold after low pass filter')
+estimatedTrack3 = AI.estimateTrack(turning_Angle, idx, stepLength=0.7)
+Plotter.plotEstimatedTrack(dataX= estimatedTrack3[:, 0], dataY= estimatedTrack3[:,1], title='Estimated track, peaks with scipy after low pass filter')
+
+plt.show()
