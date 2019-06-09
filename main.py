@@ -8,6 +8,7 @@ from scipy import signal
 
 import Reader as reader
 import config_dev as cfg
+import AngularIntegration as AI
 
 DATAFILE = 'record1.csv'
 LOWPASSFILTER = True
@@ -124,3 +125,6 @@ if LOWPASSFILTER:
     plt.plot(data[:, 0], output, label='filtered')
     plt.plot(data[idx, 0], output[idx], 'ro')
     plt.show()
+
+turning_Angle = AI.calculateTurningAngle(dataWithAccNorm=data, steps=indexes)
+AI.plotTrack(turning_Angle)
