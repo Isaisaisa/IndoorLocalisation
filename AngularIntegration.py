@@ -1,9 +1,9 @@
 import numpy as np
-import config_dev as cfg
+from scipy import signal
 import math
 import matplotlib.pyplot as plt
 
-def calculateTurningAngle(dataWithAccNorm,  steps):
+def calculateTurningAngle(dataWithAccNorm):
 
     data = dataWithAccNorm
 
@@ -14,10 +14,11 @@ def calculateTurningAngle(dataWithAccNorm,  steps):
     frequency = 400
     length = approximationTime * frequency
 
+
     g_B_apostrophe_start[0] = np.mean(data[length, 1])
     g_B_apostrophe_start[1] = np.mean(data[length, 2])
     g_B_apostrophe_start[2] = np.mean(data[length, 3])
-    print('g_B_g_B_apostrophe at t = 0 \n', g_B_apostrophe_start)
+    print('g_B_apostrophe at t = 0 \n', g_B_apostrophe_start)
 
     # ----- Calculate g_B' for the whole time sequence
     # --> page 17
@@ -27,7 +28,7 @@ def calculateTurningAngle(dataWithAccNorm,  steps):
 
     # g_B_apostrophe --> (3x72677)
     for x in range(1,data[:,0].shape[0]):
-        g_B_apostrophe[:,x] = (mu * g_B_apostrophe[:,x-1]) + ((1-mu) + data[x,1:4])
+        g_B_apostrophe[:,x] = (mu * g_B_apostrophe[:,x-1]) + ((1-mu) * data[x,1:4])
 
 
     # ----- calculate matrix R and the inverse of R for the time sequence
@@ -49,13 +50,14 @@ def calculateTurningAngle(dataWithAccNorm,  steps):
         # transpose the vectors from (3,1) to (1,3) and store it as matrix
         matrix = np.matrix(np.array([u_x.reshape((-1,1)), u_y.reshape((-1,1)), u_z.reshape((-1,1))]))
         matrixR[x, :, :] = matrix
-        matrixR_Inverse[x, :, :] = np.linalg.inv(matrix)
+        #matrixR_Inverse[x, :, :] = np.linalg.inv(matrix)
+        matrixR_Inverse[x, :, :] = np.transpose(matrix)
 
     # ----- Calculate projected turn rate
     # --> page 18
     turn_Rate = np.zeros(shape = (data[:,0].shape[0], 3))
     for x in range(0,data[:,0].shape[0]):
-        turn_Rate[x,:] = np.dot(matrixR_Inverse[x,:,:] ,data[x,1:4].reshape((-1,1)))[:,0]
+        turn_Rate[x,:] = np.dot(matrixR_Inverse[x,:,:] ,data[x,4:7].reshape((-1,1)))[:,0]
 
 
     # ---- Calculate estimated turning angle at time t
@@ -70,11 +72,15 @@ def calculateTurningAngle(dataWithAccNorm,  steps):
 
     return turning_Angle
 
-def plotTrack(turning_Angle):
+def plotTrack(turning_Angle, steps):
     # ----- Plotting the estimated tracks
-    x_y_t = np.zeros(shape= (turning_Angle.shape[0], 2))
+    ##x_y_t = np.zeros(shape= (turning_Angle.shape[0], 2))
+    x_y_t = np.zeros(shape=(steps.shape[0], 2))
     x_y_t[0,0] = 0
     x_y_t[0,1] = 0
-    for i in range(1, turning_Angle.shape[0]):
-        x_y_t[i, 0] = x_y_t[i - 1, 0] + 0.7 * math.cos(turning_Angle[i,2])
-        x_y_t[i, 1] = x_y_t[i - 1, 1] + 0.7 * math.sin(turning_Angle[i, 2])
+    for i in range(1, steps.shape[0]):
+        x_y_t[i, 0] = x_y_t[i - 1, 0] + 0.8 * math.cos(turning_Angle[steps[i],2])
+        x_y_t[i, 1] = x_y_t[i - 1, 1] + 0.8 * math.sin(turning_Angle[steps[i], 2])
+    plt.figure()
+    plt.plot(x_y_t[:,0],x_y_t[:,1], '-o')
+    plt.show()

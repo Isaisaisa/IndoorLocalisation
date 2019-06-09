@@ -126,5 +126,6 @@ if LOWPASSFILTER:
     plt.plot(data[idx, 0], output[idx], 'ro')
     plt.show()
 
-turning_Angle = AI.calculateTurningAngle(dataWithAccNorm=data, steps=indexes)
-AI.plotTrack(turning_Angle)
+turning_Angle = AI.calculateTurningAngle(dataWithAccNorm=data)
+AI.plotTrack(turning_Angle, indexes)
+print('a')
