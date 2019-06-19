@@ -11,8 +11,11 @@ import config_dev as cfg
 import AngularIntegration as AI
 import Plotter
 
-DATAFILE = 'record2.csv'
+# Choose which data file to use
+DATAFILE = 'record1.csv'
+# Visualize the recorded data
 VISUALIZE_RECORDED_DATA = True
+# Apply low pass filter to the norm of the accelerometer
 LOWPASSFILTER = True
 filename = os.path.splitext(os.path.basename(DATAFILE))[0]
 
