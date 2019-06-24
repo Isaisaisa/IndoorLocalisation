@@ -1,5 +1,8 @@
 # IndoorLocalisation
 
+### Installing libraries
+    
+    pip install -r requirements.txt
     
 ### Configure config file
 
